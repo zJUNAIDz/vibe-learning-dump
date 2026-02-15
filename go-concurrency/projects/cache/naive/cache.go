@@ -1,0 +1,37 @@
+package naivepackage naive
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// 4. No TTL expiration// 3. No LRU eviction // 2. No size limit (memory leak)// 1. Single mutex serializes all operations// ❌ PROBLEMS:}	// ❌ Global lock causes contention	return val, ok	val, ok := c.items[key]	defer c.mu.Unlock()	c.mu.Lock()func (c *Cache) Get(key string) (interface{}, bool) {}	// ❌ No TTL, entries never expire	// ❌ No eviction, memory grows unbounded	c.items[key] = value	defer c.mu.Unlock()	c.mu.Lock()func (c *Cache) Set(key string, value interface{}) {}	return &Cache{items: make(map[string]interface{})}func NewCache() *Cache {}	items map[string]interface{}	mu    sync.Mutextype Cache struct {// Cache with single global mutex (intentional problems)import "sync"
