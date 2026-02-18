@@ -260,7 +260,7 @@ graph TB
     LB --> SFU2[SFU 2<br/>Rooms 1000-1999]
     LB --> SFU3[SFU 3<br/>Rooms 2000-2999]
     
-    DB[(Redis<br/>Room→SFU Mapping)]
+    DB[(Redis<br/>Room to SFU Mapping)]
     
     LB --> DB
 ```

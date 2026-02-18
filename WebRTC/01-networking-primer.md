@@ -71,16 +71,16 @@ Let's say Alice tries to connect to Bob:
 
 ```mermaid
 sequenceDiagram
-    participant Alice<br/>192.168.1.45
-    participant AliceNAT<br/>NAT: 203.0.113.50
+    participant Alice as Alice (192.168.1.45)
+    participant AliceNAT as Alice's NAT (203.0.113.50)
     participant Internet
-    participant BobNAT<br/>NAT: 198.51.100.20
-    participant Bob<br/>192.168.5.101
+    participant BobNAT as Bob's NAT (198.51.100.20)
+    participant Bob as Bob (192.168.5.101)
     
-    Note over Alice: "I'll connect to Bob<br/>at 198.51.100.20:1234"
-    Alice->>AliceNAT: Send packet to<br/>198.51.100.20:1234
+    Note over Alice: I'll connect to Bob at 198.51.100.20:1234
+    Alice->>AliceNAT: Send packet to 198.51.100.20:1234
     AliceNAT->>BobNAT: Packet arrives
-    Note over BobNAT: "No mapping for port 1234<br/>from this source"
+    Note over BobNAT: No mapping for port 1234 from this source
     BobNAT--xAlice: Packet DROPPED
 ```
 
@@ -233,11 +233,11 @@ Based on production WebRTC deployments:
 
 ```mermaid
 sequenceDiagram
-    participant Alice<br/>192.168.1.45
-    participant AliceNAT
+    participant Alice as Alice (192.168.1.45)
+    participant AliceNAT as Alice's NAT
     participant STUN
-    participant BobNAT
-    participant Bob<br/>192.168.5.101
+    participant BobNAT as Bob's NAT
+    participant Bob as Bob (192.168.5.101)
     
     Alice->>STUN: What's my public IP?
     STUN->>Alice: 203.0.113.50:54321
@@ -245,18 +245,18 @@ sequenceDiagram
     Bob->>STUN: What's my public IP?
     STUN->>Bob: 198.51.100.20:61234
     
-    Note over Alice,Bob: Both now exchange their public addresses<br/>via signaling server (WebSocket)
+    Note over Alice,Bob: Both exchange public addresses via signaling server
     
     Alice->>BobNAT: Try to connect to 198.51.100.20:61234
-    Note over AliceNAT: Creates mapping:<br/>203.0.113.50:54321 → Alice
+    Note over AliceNAT: Creates mapping: 203.0.113.50:54321 to Alice
     
     Bob->>AliceNAT: Try to connect to 203.0.113.50:54321
-    Note over BobNAT: Creates mapping:<br/>198.51.100.20:61234 → Bob
+    Note over BobNAT: Creates mapping: 198.51.100.20:61234 to Bob
     
     AliceNAT->>Bob: Packet arrives! Mapping exists.
     BobNAT->>Alice: Packet arrives! Mapping exists.
     
-    Alice<-->Bob: Connection established!
+    Alice<<-->>Bob: Connection established!
 ```
 
 **Magic moment**: Both peers try to connect **simultaneously**. This creates NAT mappings on both sides. Subsequent packets flow through.

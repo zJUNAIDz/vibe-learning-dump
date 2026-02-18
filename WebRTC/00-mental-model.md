@@ -130,9 +130,9 @@ sequenceDiagram
         SignalingServer->>Alice: Bob's connection options
     end
     
-    Alice<-->>Bob: Try all combinations until one works (ICE)
-    Alice<-->>Bob: Secure UDP connection established
-    Alice<-->>Bob: Media/data flows directly
+    Alice <<-->>Bob: Try all combinations until one works (ICE)
+    Alice <<-->>Bob: Secure UDP connection established
+    Alice <<-->>Bob: Media/data flows directly
 ```
 
 **Notice**: The signaling server is only involved in **setup**. Once the peer connection is established, media goes directly peer-to-peer (if possible).

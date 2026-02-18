@@ -276,7 +276,7 @@ sequenceDiagram
     
     rect rgb(240, 240, 240)
         Note over Alice,Bob: Phase 4: Media (direct P2P, no server)
-        Alice<->Bob: Encrypted UDP media flows
+        Alice<<-->>Bob: Encrypted UDP media flows
     end
 ```
 

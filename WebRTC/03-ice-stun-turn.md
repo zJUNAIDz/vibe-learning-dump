@@ -99,17 +99,17 @@ STUN is a simple protocol: "Tell me my public IP:port"
 
 ```mermaid
 sequenceDiagram
-    participant You<br/>192.168.1.45:54321
-    participant NAT<br/>???
-    participant STUN<br/>stun.example.com
+    participant Client as You (192.168.1.45:54321)
+    participant NAT as Your NAT
+    participant STUN as STUN Server
     
-    You->>NAT: Send to STUN server
-    Note over NAT: Creates mapping:<br/>203.0.113.50:61234 ↔ You
+    Client->>NAT: Send to STUN server
+    Note over NAT: Creates mapping: 203.0.113.50:61234 maps to You
     NAT->>STUN: Packet from 203.0.113.50:61234
     STUN->>NAT: Response: You are 203.0.113.50:61234
-    NAT->>You: Response received
+    NAT->>Client: Response received
     
-    Note over You: Now I know my public address!
+    Note over Client: Now I know my public address!
 ```
 
 ### STUN Server Topology

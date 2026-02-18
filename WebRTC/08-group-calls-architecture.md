@@ -38,12 +38,12 @@ Everyone connects to everyone:
 
 ```mermaid
 graph TD
-    A[Alice<br/>↑3 streams] --> B[Bob]
+    A[Alice<br/>sends 3 streams] --> B[Bob]
     A --> C[Carol]
     A --> D[Dave]
-    B[Bob<br/>↑3 streams] --> C
+    B[Bob<br/>sends 3 streams] --> C
     B --> D
-    C[Carol<br/>↑3 streams] --> D
+    C[Carol<br/>sends 3 streams] --> D
 ```
 
 **Pros**:
@@ -66,14 +66,14 @@ Server mixes all streams into one:
 
 ```mermaid
 graph LR
-    A[Alice<br/>↑1 stream] --> M[MCU Server<br/>Mixes All Streams]
-    B[Bob<br/>↑1 stream] --> M
-    C[Carol<br/>↑1 stream] --> M
-    D[Dave<br/>↑1 stream] --> M
-    M --> A2[Alice<br/>↓1 mixed]
-    M --> B2[Bob<br/>↓1 mixed]
-    M --> C2[Carol<br/>↓1 mixed]
-    M --> D2[Dave<br/>↓1 mixed]
+    A[Alice<br/>sends 1 stream] --> M[MCU Server<br/>Mixes All Streams]
+    B[Bob<br/>sends 1 stream] --> M
+    C[Carol<br/>sends 1 stream] --> M
+    D[Dave<br/>sends 1 stream] --> M
+    M --> A2[Alice<br/>receives 1 mixed]
+    M --> B2[Bob<br/>receives 1 mixed]
+    M --> C2[Carol<br/>receives 1 mixed]
+    M --> D2[Dave<br/>receives 1 mixed]
 ```
 
 **Pros**:
@@ -99,14 +99,14 @@ Server forwards streams without transcoding:
 
 ```mermaid
 graph LR
-    A[Alice<br/>↑1 stream] --> S[SFU Server<br/>Forwards Only]
-    B[Bob<br/>↑1 stream] --> S
-    C[Carol<br/>↑1 stream] --> S
-    D[Dave<br/>↑1 stream] --> S
-    S --> A2[Alice<br/>↓3 streams]
-    S --> B2[Bob<br/>↓3 streams]
-    S --> C2[Carol<br/>↓3 streams]
-    S --> D2[Dave<br/>↓3 streams]
+    A[Alice<br/>sends 1 stream] --> S[SFU Server<br/>Forwards Only]
+    B[Bob<br/>sends 1 stream] --> S
+    C[Carol<br/>sends 1 stream] --> S
+    D[Dave<br/>sends 1 stream] --> S
+    S --> A2[Alice<br/>receives 3 streams]
+    S --> B2[Bob<br/>receives 3 streams]
+    S --> C2[Carol<br/>receives 3 streams]
+    S --> D2[Dave<br/>receives 3 streams]
 ```
 
 **Pros**:

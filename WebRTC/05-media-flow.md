@@ -553,7 +553,7 @@ sequenceDiagram
         Sender->>Receiver: Video RTP (timestamp: 3000)
     end
     
-    Sender->>Receiver: RTCP SR (wallclock ↔ timestamp mapping)
+    Sender->>Receiver: RTCP SR (wallclock to timestamp mapping)
     
     Note over Receiver: Sync using SR mapping
 ```

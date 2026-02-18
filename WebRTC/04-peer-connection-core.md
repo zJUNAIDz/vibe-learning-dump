@@ -148,13 +148,13 @@ const pc = new RTCPeerConnection({
 
 ```mermaid
 graph LR
-    subgraph "max-bundle (recommended)"
+    subgraph maxBundle["max-bundle (recommended)"]
         A[Audio] --> C[Single UDP Connection]
         B[Video] --> C
         D[Data] --> C
     end
     
-    subgraph "max-compat (legacy)"
+    subgraph maxCompat["max-compat (legacy)"]
         E[Audio] --> F[UDP Connection 1]
         G[Video] --> H[UDP Connection 2]
         I[Data] --> J[UDP Connection 3]
