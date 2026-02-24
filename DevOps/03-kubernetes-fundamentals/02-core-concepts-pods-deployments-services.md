@@ -330,12 +330,19 @@ spec:
 
 **Problem:** Pods have dynamic IPs. They come and go.
 
-```
-Pod 1 → 10.0.1.5  (crashes, new pod gets 10.0.1.8)
-Pod 2 → 10.0.1.6
-Pod 3 → 10.0.1.7
-
-How do clients reach "the app"?
+```mermaid
+graph LR
+    A["Pod 1 → 10.0.1.5"] -.->|crashes| B["new pod → 10.0.1.8"]
+    C["Pod 2 → 10.0.1.6"]
+    D["Pod 3 → 10.0.1.7"]
+    
+    E["How do clients reach 'the app'?"]
+    
+    style A fill:#fbb,stroke:#333,stroke-width:2px
+    style B fill:#bfb,stroke:#333,stroke-width:2px
+    style C fill:#bbf,stroke:#333,stroke-width:2px
+    style D fill:#bbf,stroke:#333,stroke-width:2px
+    style E fill:#ffd,stroke:#333,stroke-width:2px
 ```
 
 **Solution:** Kubernetes **Service**.
@@ -349,16 +356,22 @@ A **Service** provides:
 - **DNS name** (`my-service.default.svc.cluster.local`)
 - **Load balancing** across all matching pods
 
-```
-            ┌─────────────┐
-            │  Service    │
-            │  10.96.0.1  │
-            └──────┬──────┘
-                   │
-         Load balances to:
-        ┌──────┬──────┬──────┐
-        │ Pod1 │ Pod2 │ Pod3 │
-        └──────┴──────┴──────┘
+```mermaid
+graph TB
+    SVC["Service<br/>10.96.0.1"]
+    
+    POD1["Pod1"]
+    POD2["Pod2"]
+    POD3["Pod3"]
+    
+    SVC -->|"Load balances to:"| POD1
+    SVC --> POD2
+    SVC --> POD3
+    
+    style SVC fill:#bfb,stroke:#333,stroke-width:3px
+    style POD1 fill:#bbf,stroke:#333,stroke-width:2px
+    style POD2 fill:#bbf,stroke:#333,stroke-width:2px
+    style POD3 fill:#bbf,stroke:#333,stroke-width:2px
 ```
 
 ---

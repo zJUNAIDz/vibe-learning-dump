@@ -10,13 +10,18 @@
 
 Translation: It's the first process that starts (PID 1) and manages all other services.
 
-```
-Boot sequence:
-1. Kernel loads
-2. Kernel starts PID 1 (systemd)
-3. systemd reads configuration
-4. systemd starts services (network, SSH, Docker, etc.)
-5. System ready
+```mermaid
+graph TD
+    A["1. Kernel loads"] --> B["2. Kernel starts PID 1 (systemd)"]
+    B --> C["3. systemd reads configuration"]
+    C --> D["4. systemd starts services<br/>(network, SSH, Docker, etc.)"]
+    D --> E["5. System ready"]
+    
+    style A fill:#fbb,stroke:#333,stroke-width:2px
+    style B fill:#fda,stroke:#333,stroke-width:2px
+    style C fill:#ffd,stroke:#333,stroke-width:2px
+    style D fill:#bbf,stroke:#333,stroke-width:2px
+    style E fill:#bfb,stroke:#333,stroke-width:2px
 ```
 
 ---

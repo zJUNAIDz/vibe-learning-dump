@@ -23,21 +23,14 @@ A **process** is a running instance of a program.
 
 But what does that *mean*?
 
-```
-Your program:     main.go (text file on disk)
-                      ↓
-                  [compile]
-                      ↓
-Executable:       ./myapp (binary on disk)
-                      ↓
-                  [run it]
-                      ↓
-Process:          Running instance in memory
-                  - Has a PID (process ID)
-                  - Has memory allocated
-                  - Has CPU time scheduled
-                  - Has file descriptors
-                  - Has an owner (user)
+```mermaid
+graph TD
+    A["Your program: main.go<br/>(text file on disk)"] -->|compile| B["Executable: ./myapp<br/>(binary on disk)"]
+    B -->|run it| C["Process: Running instance in memory<br/>• Has a PID (process ID)<br/>• Has memory allocated<br/>• Has CPU time scheduled<br/>• Has file descriptors<br/>• Has an owner (user)"]
+    
+    style A fill:#ffe,stroke:#333,stroke-width:2px
+    style B fill:#ffd,stroke:#333,stroke-width:2px
+    style C fill:#bfb,stroke:#333,stroke-width:2px
 ```
 
 ---
@@ -69,30 +62,15 @@ htop
 
 ### Process Lifecycle
 
-```
-┌─────────────┐
-│   Created   │  fork() called, new PID assigned
-└──────┬──────┘
-       │
-       ↓
-┌─────────────┐
-│   Running   │  Actually executing on CPU
-└──────┬──────┘
-       │
-       ↓
-┌─────────────┐
-│   Waiting   │  Blocked on I/O (disk, network)
-└──────┬──────┘
-       │
-       ↓
-┌─────────────┐
-│   Zombie    │  Finished, waiting for parent to read exit code
-└──────┬──────┘
-       │
-       ↓
-┌─────────────┐
-│   Reaped    │  Removed from process table
-└─────────────┘
+```mermaid
+stateDiagram-v2
+    [*] --> Created: fork() called, new PID assigned
+    Created --> Running: Actually executing on CPU
+    Running --> Waiting: Blocked on I/O (disk, network)
+    Waiting --> Running: I/O complete
+    Running --> Zombie: Finished, waiting for parent to read exit code
+    Zombie --> Reaped: Parent calls wait()
+    Reaped --> [*]: Removed from process table
 ```
 
 ---
@@ -228,15 +206,20 @@ process.on('SIGTERM', () => {
 
 A filesystem is how the OS organizes data on disk.
 
-```
-Physical Reality:
-    [Hard drive] → spinning platters or flash cells
-                 → just bytes at addresses
-
-Filesystem Abstraction:
-    [Linux Filesystem] → files and directories
-                       → permissions, owners
-                       → metadata (timestamps, sizes)
+```mermaid
+graph TB
+    subgraph "Physical Reality"
+        A["Hard drive<br/>spinning platters or flash cells<br/>just bytes at addresses"]
+    end
+    
+    subgraph "Filesystem Abstraction"
+        B["Linux Filesystem<br/>• Files and directories<br/>• Permissions, owners<br/>• Metadata (timestamps, sizes)"]
+    end
+    
+    A -.->|abstracted by| B
+    
+    style A fill:#fdd,stroke:#333,stroke-width:2px
+    style B fill:#bfb,stroke:#333,stroke-width:2px
 ```
 
 ---
@@ -303,15 +286,15 @@ ls -la /proc/1234/fd/
 
 An **inode** is metadata about a file.
 
-```
-Filename:   data.txt
-    ↓
-Inode #123456:
-    - Size: 5000 bytes
-    - Owner: user
-    - Permissions: 0644
-    - Timestamps: created, modified, accessed
-    - Pointers to disk blocks
+```mermaid
+graph LR
+    A["Filename: data.txt"] --> B["Inode #123456"]
+    
+    B --> C["• Size: 5000 bytes<br/>• Owner: user<br/>• Permissions: 0644<br/>• Timestamps: created, modified, accessed<br/>• Pointers to disk blocks"]
+    
+    style A fill:#ffe,stroke:#333,stroke-width:2px
+    style B fill:#ffd,stroke:#333,stroke-width:2px
+    style C fill:#bfb,stroke:#333,stroke-width:2px
 ```
 
 **Key insight:**
@@ -365,17 +348,23 @@ Filesystem     Inodes  IUsed  IFree  IUse%
 
 Linux uses a simple permission model:
 
-```
--rwxr-xr--  1 user group  1234  Jan 15 10:30 script.sh
-│││││││││
-││││││││└─ other (everyone else)
-│││││││└── group
-││││││└─── user (owner)
-│││││
-│││││ r = read (4)
-││││└ w = write (2)
-│││└─ x = execute (1)
-││└── file type (- = regular, d = directory, l = symlink)
+```mermaid
+graph TD
+    A["-rwxr-xr-- 1 user group 1234 Jan 15 10:30 script.sh"] --> B["File type<br/>(-) = regular file<br/>(d) = directory<br/>(l) = symlink"]
+    A --> C["User/Owner permissions<br/>(rwx)<br/>read + write + execute"]
+    A --> D["Group permissions<br/>(r-x)<br/>read + execute"]
+    A --> E["Other permissions<br/>(r--)<br/>read only"]
+    
+    C --> F["r = read (4)<br/>w = write (2)<br/>x = execute (1)"]
+    D --> F
+    E --> F
+    
+    style A fill:#ddf,stroke:#333,stroke-width:2px,color:#000
+    style B fill:#fcf,stroke:#333,stroke-width:2px,color:#000
+    style C fill:#bfb,stroke:#333,stroke-width:2px,color:#000
+    style D fill:#ffd,stroke:#333,stroke-width:2px,color:#000
+    style E fill:#fda,stroke:#333,stroke-width:2px,color:#000
+    style F fill:#bbf,stroke:#333,stroke-width:2px,color:#000
 ```
 
 **Numeric representation:**

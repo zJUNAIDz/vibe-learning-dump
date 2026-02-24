@@ -8,12 +8,18 @@
 
 In 2008, a typical software release cycle looked like this:
 
-```
-[Developers] → (throw code over the wall) → [Operations] → Production
-
-Timeline: Weeks to months
-Success rate: 50%
-Blame culture: 100%
+```mermaid
+graph LR
+    A[Developers] -->|throw code over the wall| B[Operations]
+    B --> C[Production]
+    
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style B fill:#bbf,stroke:#333,stroke-width:2px
+    style C fill:#bfb,stroke:#333,stroke-width:2px
+    
+    classDef note fill:#ffe,stroke:#333,stroke-width:1px
+    
+    note1["Timeline: Weeks to months<br/>Success rate: 50%<br/>Blame culture: 100%"]:::note
 ```
 
 **What went wrong:**
@@ -50,17 +56,37 @@ DevOps **is**:
 Get code from laptop → production **quickly** and **safely**.
 
 **Bad:**
-```
-Dev writes code → PR approved → waits 2 weeks → 
-manual QA → waits 1 week → operations schedules deploy → 
-3 hour maintenance window → fingers crossed
+```mermaid
+graph LR
+    A[Dev writes code] --> B[PR approved]
+    B --> C[waits 2 weeks]
+    C --> D[manual QA]
+    D --> E[waits 1 week]
+    E --> F[operations schedules deploy]
+    F --> G[3 hour maintenance window]
+    G --> H[fingers crossed]
+    
+    style C fill:#fbb,stroke:#333,stroke-width:2px
+    style E fill:#fbb,stroke:#333,stroke-width:2px
+    style G fill:#fbb,stroke:#333,stroke-width:2px
+    style H fill:#fbb,stroke:#333,stroke-width:2px
 ```
 
 **Good:**
-```
-Dev writes code → PR approved → CI runs tests → 
-automated deploy to staging → automated tests pass → 
-production deploy (5 minutes total) → rollback in 30s if needed
+```mermaid
+graph LR
+    A[Dev writes code] --> B[PR approved]
+    B --> C[CI runs tests]
+    C --> D[automated deploy to staging]
+    D --> E[automated tests pass]
+    E --> F[production deploy<br/>5 minutes total]
+    F -.->|if needed| G[rollback in 30s]
+    
+    style C fill:#bfb,stroke:#333,stroke-width:2px
+    style D fill:#bfb,stroke:#333,stroke-width:2px
+    style E fill:#bfb,stroke:#333,stroke-width:2px
+    style F fill:#bfb,stroke:#333,stroke-width:2px
+    style G fill:#bfb,stroke:#333,stroke-width:2px
 ```
 
 ### 2. Feedback (Learning)

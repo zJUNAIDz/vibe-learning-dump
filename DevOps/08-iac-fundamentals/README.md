@@ -7,22 +7,31 @@
 ## What Is IaC?
 
 **Before IaC:**
-```
-1. Log into AWS console
-2. Click "Launch Instance"
-3. Choose AMI, instance type, network, security group
-4. Click "Launch"
-5. Repeat for 10 servers
-6. Forget what you clicked
-7. Can't reproduce environment
+```mermaid
+graph TD
+    A["1. Log into AWS console"] --> B["2. Click 'Launch Instance'"]
+    B --> C["3. Choose AMI, instance type,<br/>network, security group"]
+    C --> D["4. Click 'Launch'"]
+    D --> E["5. Repeat for 10 servers"]
+    E --> F["6. Forget what you clicked"]
+    F --> G["7. Can't reproduce environment ❌"]
+    
+    style A fill:#fbb,stroke:#333,stroke-width:2px
+    style B fill:#fbb,stroke:#333,stroke-width:2px
+    style C fill:#fbb,stroke:#333,stroke-width:2px
+    style D fill:#fbb,stroke:#333,stroke-width:2px
+    style E fill:#fbb,stroke:#333,stroke-width:2px
+    style F fill:#f99,stroke:#333,stroke-width:2px
+    style G fill:#f66,stroke:#333,stroke-width:3px
 ```
 
 **With IaC:**
-```bash
-terraform apply
-# Creates 10 identical servers
-# Config is in Git
-# Reproducible, auditable, testable
+```mermaid
+graph LR
+    A["terraform apply"] --> B["✅ Creates 10 identical servers<br/>✅ Config is in Git<br/>✅ Reproducible, auditable, testable"]
+    
+    style A fill:#bfb,stroke:#333,stroke-width:2px
+    style B fill:#9f9,stroke:#333,stroke-width:2px
 ```
 
 ---

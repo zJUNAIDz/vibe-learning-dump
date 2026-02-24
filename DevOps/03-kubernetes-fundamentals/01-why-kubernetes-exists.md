@@ -73,25 +73,20 @@ Need 20 instances? → K8s scales up
 
 This is the **core concept** of Kubernetes.
 
-```
-┌────────────────────────────────────────┐
-│  You (Developer)                       │
-│  "I want 3 replicas of my API"        │
-└─────────────┬──────────────────────────┘
-              │
-              ↓ (Declare desired state)
-┌────────────────────────────────────────┐
-│  Kubernetes Control Plane              │
-│  "Current: 2 replicas                  │
-│   Desired: 3 replicas                  │
-│   Action: Start 1 more"                │
-└─────────────┬──────────────────────────┘
-              │
-              ↓ (Reconcile)
-┌────────────────────────────────────────┐
-│  Cluster (Actual State)                │
-│  3 replicas running ✓                  │
-└────────────────────────────────────────┘
+```mermaid
+sequenceDiagram
+    participant Dev as You (Developer)
+    participant CP as Kubernetes Control Plane
+    participant Cluster as Cluster (Actual State)
+    
+    Dev->>CP: "I want 3 replicas of my API"
+    Note over Dev,CP: Declare desired state
+    
+    CP->>CP: Current: 2 replicas<br/>Desired: 3 replicas<br/>Action: Start 1 more
+    Note over CP: Reconcile
+    
+    CP->>Cluster: Start 1 more replica
+    Cluster->>CP: 3 replicas running ✓
 ```
 
 **Key insight:** You don't tell Kubernetes **how** to do things. You tell it **what you want**, and it figures out how.
@@ -163,26 +158,34 @@ Kubernetes = PostgreSQL cluster
 
 ## The Architecture (High-Level)
 
-```
-┌─────────────────────────────────────────────────┐
-│           Kubernetes Cluster                    │
-│                                                 │
-│  ┌─────────────────────────────────────┐       │
-│  │  Control Plane (Master)             │       │
-│  │  - API Server                       │       │
-│  │  - Scheduler                        │       │
-│  │  - Controller Manager               │       │
-│  │  - etcd (database)                  │       │
-│  └─────────────────────────────────────┘       │
-│                     ↓                           │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐     │
-│  │  Node 1  │  │  Node 2  │  │  Node 3  │     │
-│  │          │  │          │  │          │     │
-│  │ [Pod]    │  │ [Pod]    │  │ [Pod]    │     │
-│  │ [Pod]    │  │ [Pod]    │  │          │     │
-│  └──────────┘  └──────────┘  └──────────┘     │
-│  (Data Plane / Worker Nodes)                   │
-└─────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph "Kubernetes Cluster"
+        subgraph "Control Plane (Master)"
+            API["API Server"]
+            SCHED["Scheduler"]
+            CM["Controller Manager"]
+            ETCD["etcd (database)"]
+        end
+        
+        subgraph "Data Plane / Worker Nodes"
+            N1["Node 1<br/>[Pod] [Pod]"]
+            N2["Node 2<br/>[Pod] [Pod]"]
+            N3["Node 3<br/>[Pod]"]
+        end
+        
+        API --> N1
+        API --> N2
+        API --> N3
+    end
+    
+    style API fill:#bfb,stroke:#333,stroke-width:2px
+    style SCHED fill:#ffd,stroke:#333,stroke-width:2px
+    style CM fill:#bbf,stroke:#333,stroke-width:2px
+    style ETCD fill:#fda,stroke:#333,stroke-width:2px
+    style N1 fill:#ddf,stroke:#333,stroke-width:2px
+    style N2 fill:#ddf,stroke:#333,stroke-width:2px
+    style N3 fill:#ddf,stroke:#333,stroke-width:2px
 ```
 
 **Two parts:**
@@ -279,25 +282,25 @@ Each **node** (worker machine) runs:
 
 Let's trace what happens when you run `kubectl apply -f pod.yaml`.
 
-```
-1. kubectl
-   - Reads pod.yaml
-   - Sends POST request to API server
-
-2. API Server
-   - Validates the YAML (correct syntax? valid fields?)
-   - Authenticates you (are you allowed?)
-   - Authorizes the request (RBAC)
-   - Writes pod object to etcd
-
-3. Scheduler (watching API server)
-   - Sees new pod (status: Pending, no node assigned)
-   - Evaluates all nodes
-   - Picks best node (most free resources, least pods, etc.)
-   - Updates pod object: node=node2
-   - Writes back to API server → etcd
-
-4. kubelet on node2 (watching API server)
+```mermaid
+sequenceDiagram
+    participant kubectl
+    participant API as API Server
+    participant etcd
+    participant Scheduler
+    participant kubelet as kubelet on node2
+    
+    kubectl->>API: 1. POST pod.yaml
+    Note over API: 2. Validates YAML<br/>Authenticates<br/>Authorizes (RBAC)
+    API->>etcd: 3. Write pod object
+    
+    Scheduler->>API: 4. Watching for new pods<br/>Sees: status=Pending, no node assigned
+    Note over Scheduler: 5. Evaluates all nodes<br/>Picks best node
+    Scheduler->>API: 6. Update pod: node=node2
+    API->>etcd: Write update
+    
+    kubelet->>API: 7. Watching for pods assigned to node2
+    Note over kubelet: 8. Sees new pod<br/>assigned to me
    - Sees pod assigned to node2
    - Tells containerd: "Start these containers"
    - containerd pulls image, starts containers

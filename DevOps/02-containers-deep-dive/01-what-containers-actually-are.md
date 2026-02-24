@@ -8,12 +8,20 @@
 
 You've learned that containers use **cgroups** and **namespaces**. Now let's add the third piece:
 
-```
-Container = cgroups + namespaces + layered filesystem
-
-cgroups           → Resource limits
-namespaces        → Isolation  
-layered filesystem → Images, sharing, efficiency
+```mermaid
+graph LR
+    A[Container] --> B[cgroups]
+    A --> C[namespaces]
+    A --> D["layered filesystem"]
+    
+    B --> E["Resource limits"]
+    C --> F[Isolation]
+    D --> G["Images, sharing, efficiency"]
+    
+    style A fill:#bfb,stroke:#333,stroke-width:3px
+    style B fill:#ffd,stroke:#333,stroke-width:2px
+    style C fill:#bbf,stroke:#333,stroke-width:2px
+    style D fill:#fda,stroke:#333,stroke-width:2px
 ```
 
 ---
@@ -23,23 +31,47 @@ layered filesystem → Images, sharing, efficiency
 ### The Problem
 
 Without layers:
-```
-Image A (Node.js app):     1 GB
-Image B (Another Node.js): 1 GB
-Image C (Another Node.js): 1 GB
-
-Total disk: 3 GB (lots of duplication!)
+```mermaid
+graph TB
+    A["Image A (Node.js app): 1 GB"]
+    B["Image B (Another Node.js): 1 GB"]
+    C["Image C (Another Node.js): 1 GB"]
+    D["Total disk: 3 GB (lots of duplication!)"]
+    
+    A --> D
+    B --> D
+    C --> D
+    
+    style A fill:#fbb,stroke:#333,stroke-width:2px
+    style B fill:#fbb,stroke:#333,stroke-width:2px
+    style C fill:#fbb,stroke:#333,stroke-width:2px
+    style D fill:#f99,stroke:#333,stroke-width:3px
 ```
 
 With layers:
-```
-Base layer (Ubuntu):       100 MB  ← Shared
-Node.js layer:             200 MB  ← Shared
-App A layer:               10 MB
-App B layer:               15 MB
-App C layer:               12 MB
-
-Total disk: 100 + 200 + 10 + 15 + 12 = 337 MB
+```mermaid
+graph TB
+    Base["Base layer (Ubuntu): 100 MB ← Shared"]
+    Node["Node.js layer: 200 MB ← Shared"]
+    A["App A layer: 10 MB"]
+    B["App B layer: 15 MB"]
+    C["App C layer: 12 MB"]
+    Total["Total: 100 + 200 + 10 + 15 + 12 = 337 MB"]
+    
+    Base --> Node
+    Node --> A
+    Node --> B
+    Node --> C
+    A --> Total
+    B --> Total
+    C --> Total
+    
+    style Base fill:#bfb,stroke:#333,stroke-width:2px
+    style Node fill:#bfb,stroke:#333,stroke-width:2px
+    style A fill:#bbf,stroke:#333,stroke-width:2px
+    style B fill:#bbf,stroke:#333,stroke-width:2px
+    style C fill:#bbf,stroke:#333,stroke-width:2px
+    style Total fill:#9f9,stroke:#333,stroke-width:3px
 ```
 
 ---
@@ -48,16 +80,16 @@ Total disk: 100 + 200 + 10 + 15 + 12 = 337 MB
 
 An image is a **stack of read-only layers**.
 
-```
-┌─────────────────────┐
-│  App files          │ ← Layer 3 (your app)
-├─────────────────────┤
-│  npm install        │ ← Layer 2 (dependencies)
-├─────────────────────┤
-│  Node.js, npm       │ ← Layer 1 (runtime)
-├─────────────────────┤
-│  Ubuntu base        │ ← Layer 0 (OS)
-└─────────────────────┘
+```mermaid
+graph TB
+    A["Layer 3: App files<br/>(your app)"] --> B["Layer 2: npm install<br/>(dependencies)"]
+    B --> C["Layer 1: Node.js, npm<br/>(runtime)"]
+    C --> D["Layer 0: Ubuntu base<br/>(OS)"]
+    
+    style A fill:#bfb,stroke:#333,stroke-width:2px
+    style B fill:#ffd,stroke:#333,stroke-width:2px
+    style C fill:#bbf,stroke:#333,stroke-width:2px
+    style D fill:#fda,stroke:#333,stroke-width:2px
 ```
 
 **Key insight:** 
@@ -76,13 +108,17 @@ An image is a **stack of read-only layers**.
    - Changes happen in writable layer only
    - Original file unchanged
 
-```
-Container view:
-┌─────────────────────┐
-│ Writable layer      │ ← Changes go here
-├─────────────────────┤
-│ Read-only layers    │ ← Original image
-└─────────────────────┘
+```mermaid
+graph TB
+    subgraph "Container view"
+        A["Writable layer<br/>← Changes go here"]
+        B["Read-only layers<br/>← Original image"]
+    end
+    
+    A --> B
+    
+    style A fill:#bfb,stroke:#333,stroke-width:2px
+    style B fill:#ddf,stroke:#333,stroke-width:2px
 ```
 
 ---
@@ -107,72 +143,82 @@ docker info | grep "Storage Driver"
 
 ## Anatomy of a Container
 
-```
-┌────────────────────────────────────────┐
-│          Container                     │
-│                                        │
-│  ┌──────────────────────────────────┐ │
-│  │  Process tree (PID namespace)    │ │
-│  │  - PID 1: /app/server            │ │
-│  │  - PID 2: /app/worker            │ │
-│  └──────────────────────────────────┘ │
-│                                        │
-│  ┌──────────────────────────────────┐ │
-│  │  Network (NET namespace)         │ │
-│  │  - eth0: 172.17.0.2              │ │
-│  │  - lo: 127.0.0.1                 │ │
-│  └──────────────────────────────────┘ │
-│                                        │
-│  ┌──────────────────────────────────┐ │
-│  │  Filesystem (MNT namespace)      │ │
-│  │  - Layered image + writable top  │ │
-│  └──────────────────────────────────┘ │
-│                                        │
-│  ┌──────────────────────────────────┐ │
-│  │  Hostname (UTS namespace)        │ │
-│  │  - f3a8b2c1e234                  │ │
-│  └──────────────────────────────────┘ │
-│                                        │
-│  ┌──────────────────────────────────┐ │
-│  │  Resource limits (cgroups)       │ │
-│  │  - CPU: 1 core                   │ │
-│  │  - Memory: 512 MB                │ │
-│  └──────────────────────────────────┘ │
-└────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph Container["🐳 Container"]
+        subgraph PID["Process tree (PID namespace)"]
+            P1["PID 1: /app/server"]
+            P2["PID 2: /app/worker"]
+        end
+        
+        subgraph NET["Network (NET namespace)"]
+            N1["eth0: 172.17.0.2"]
+            N2["lo: 127.0.0.1"]
+        end
+        
+        subgraph MNT["Filesystem (MNT namespace)"]
+            F1["Layered image + writable top"]
+        end
+        
+        subgraph UTS["Hostname (UTS namespace)"]
+            H1["f3a8b2c1e234"]
+        end
+        
+        subgraph CG["Resource limits (cgroups)"]
+            R1["CPU: 1 core"]
+            R2["Memory: 512 MB"]
+        end
+    end
+    
+    style Container fill:#e6f3ff,stroke:#333,stroke-width:3px,color:#000
+    style PID fill:#ffe6e6,stroke:#333,stroke-width:2px,color:#000
+    style NET fill:#e6ffe6,stroke:#333,stroke-width:2px,color:#000
+    style MNT fill:#fff0e6,stroke:#333,stroke-width:2px,color:#000
+    style UTS fill:#f0e6ff,stroke:#333,stroke-width:2px,color:#000
+    style CG fill:#ffffcc,stroke:#333,stroke-width:2px,color:#000
 ```
 
 ---
 
 ## Container Lifecycle
 
-```
-1. CREATE
-   docker create <image>
-   → Container created (not running)
-   → Filesystem layers allocated
-   → Namespaces NOT yet created
-
-2. START
-   docker start <container>
-   → Namespaces created
-   → cgroups applied
-   → Process (PID 1) started
-
-3. RUNNING
-   → Process executing
-   → Consuming resources
-
-4. STOP
-   docker stop <container>
-   → Sends SIGTERM to PID 1
-   → Waits 10 seconds (default)
-   → Sends SIGKILL if still alive
-
-5. REMOVE
-   docker rm <container>
-   → Namespaces destroyed
-   → Writable layer deleted
-   → Base image layers remain (shared)
+```mermaid
+stateDiagram-v2
+    [*] --> CREATE: docker create &lt;image&gt;
+    note right of CREATE
+        Container created (not running)
+        Filesystem layers allocated
+        Namespaces NOT yet created
+    end note
+    
+    CREATE --> START: docker start &lt;container&gt;
+    note right of START
+        Namespaces created
+        cgroups applied
+        Process (PID 1) started
+    end note
+    
+    START --> RUNNING
+    note right of RUNNING
+        Process executing
+        Consuming resources
+    end note
+    
+    RUNNING --> STOP: docker stop &lt;container&gt;
+    note right of STOP
+        Sends SIGTERM to PID 1
+        Waits 10 seconds (default)
+        Sends SIGKILL if still alive
+    end note
+    
+    STOP --> REMOVE: docker rm &lt;container&gt;
+    note right of REMOVE
+        Namespaces destroyed
+        Writable layer deleted
+        Base image layers remain (shared)
+    end note
+    
+    REMOVE --> [*]
 ```
 
 ---
@@ -197,42 +243,21 @@ Container = Object instance
 
 ## Docker Architecture
 
-```
-┌──────────────────────────────────────────────────┐
-│                    Docker CLI                    │
-│                   (docker ...)                   │
-└────────────────────┬─────────────────────────────┘
-                     │
-                     │ REST API
-                     ↓
-┌──────────────────────────────────────────────────┐
-│               Docker Daemon (dockerd)            │
-│                                                  │
-│  ┌──────────────┐  ┌──────────────┐            │
-│  │ Image Mgmt   │  │ Container    │            │
-│  │              │  │ Lifecycle    │            │
-│  └──────────────┘  └──────────────┘            │
-│                                                  │
-│  ┌──────────────┐  ┌──────────────┐            │
-│  │ Networking   │  │ Volume Mgmt  │            │
-│  └──────────────┘  └──────────────┘            │
-└────────────────────┬─────────────────────────────┘
-                     │
-                     ↓
-┌──────────────────────────────────────────────────┐
-│              containerd (runtime)                │
-│  - Manages container lifecycle                  │
-│  - Pulls images                                 │
-│  - Low-level container operations               │
-└────────────────────┬─────────────────────────────┘
-                     │
-                     ↓
-┌──────────────────────────────────────────────────┐
-│                  runc (OCI runtime)              │
-│  - Creates namespaces                           │
-│  - Sets up cgroups                              │
-│  - Executes container process                   │
-└──────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    A["Docker CLI<br/>(docker ...)"]
+    B["Docker Daemon (dockerd)<br/>• Image Mgmt• Container Lifecycle<br/>• Networking• Volume Mgmt"]
+    C["containerd (runtime)<br/>• Manages container lifecycle<br/>• Pulls images<br/>• Low-level container operations"]
+    D["runc (OCI runtime)<br/>• Creates namespaces<br/>• Sets up cgroups<br/>• Executes container process"]
+    
+    A -->|"REST API"| B
+    B --> C
+    C --> D
+    
+    style A fill:#bfb,stroke:#333,stroke-width:2px
+    style B fill:#ffd,stroke:#333,stroke-width:2px
+    style C fill:#bbf,stroke:#333,stroke-width:2px
+    style D fill:#fda,stroke:#333,stroke-width:2px
 ```
 
 **Key components:**
@@ -290,21 +315,28 @@ alias docker=podman
 
 A **registry** stores and distributes images.
 
-```
-┌────────────────────────────────────┐
-│  Registry (e.g., Docker Hub)       │
-│                                    │
-│  user/myapp:latest                 │
-│  user/myapp:v1.0                   │
-│  nginx:alpine                      │
-│  postgres:14                       │
-└────────────────────────────────────┘
-         ↑              ↓
-     docker push    docker pull
-         ↑              ↓
-┌────────────────────────────────────┐
-│       Local Docker Daemon          │
-└────────────────────────────────────┘
+```mermaid
+graph TD
+    subgraph Registry["📦 Registry (e.g., Docker Hub)"]
+        I1["user/myapp:latest"]
+        I2["user/myapp:v1.0"]
+        I3["nginx:alpine"]
+        I4["postgres:14"]
+    end
+    
+    subgraph Local["💻 Local Docker Daemon"]
+        L1[" "]
+    end
+    
+    Local -->|"docker push"| Registry
+    Registry -->|"docker pull"| Local
+    
+    style Registry fill:#e6f3ff,stroke:#333,stroke-width:2px,color:#000
+    style Local fill:#ffe6f0,stroke:#333,stroke-width:2px,color:#000
+    style I1 fill:#d4edff,stroke:#333,stroke-width:1px,color:#000
+    style I2 fill:#d4edff,stroke:#333,stroke-width:1px,color:#000
+    style I3 fill:#d4edff,stroke:#333,stroke-width:1px,color:#000
+    style I4 fill:#d4edff,stroke:#333,stroke-width:1px,color:#000
 ```
 
 **Major registries:**
@@ -318,19 +350,33 @@ A **registry** stores and distributes images.
 
 ## Image Tags
 
-```
-nginx:latest
-│     │
-│     └────── Tag (version)
-└──────────── Repository (image name)
-
-Full name:
-registry.example.com/user/nginx:v1.0
-│                    │    │     │
-│                    │    │     └─ Tag
-│                    │    └─────── Image name
-│                    └──────────── Namespace/user
-└───────────────────────────────── Registry
+```mermaid
+graph LR
+    A["nginx:latest"]
+    
+    B["Repository:<br/>nginx"]
+    C["Tag:<br/>latest (version)"]
+    
+    A --> B
+    A --> C
+    
+    subgraph "Full name example"
+        D["registry.example.com/user/nginx:v1.0"]
+        E["Registry:<br/>registry.example.com"]
+        F["Namespace/user:<br/>user"]
+        G["Image name:<br/>nginx"]
+        H["Tag:<br/>v1.0"]
+    end
+    
+    D --> E
+    D --> F
+    D --> G
+    D --> H
+    
+    style A fill:#bfb,stroke:#333,stroke-width:2px
+    style B fill:#bbf,stroke:#333,stroke-width:2px
+    style C fill:#ffd,stroke:#333,stroke-width:2px
+    style D fill:#fda,stroke:#333,stroke-width:2px
 ```
 
 **Special tags:**

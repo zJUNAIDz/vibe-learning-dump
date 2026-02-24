@@ -8,12 +8,26 @@
 
 **Reality:** Containers share the host kernel. A compromised container **can attack the host**.
 
-```
-┌──────────────────────────────┐
-│        Host Kernel           │ ← Single point of failure
-├────────┬─────────┬───────────┤
-│ App A  │  App B  │  App C    │ ← All share kernel
-└────────┴─────────┴───────────┘
+```mermaid
+graph TB
+    subgraph "Single Point of Failure"
+        A["Host Kernel"]
+    end
+    
+    B["App A"]
+    C["App B"]
+    D["App C"]
+    
+    A --> B
+    A --> C
+    A --> D
+    
+    Note["All share kernel"]
+    
+    style A fill:#fbb,stroke:#333,stroke-width:3px
+    style B fill:#bbf,stroke:#333,stroke-width:2px
+    style C fill:#bbf,stroke:#333,stroke-width:2px
+    style D fill:#bbf,stroke:#333,stroke-width:2px
 ```
 
 **If App B gets compromised and breaks out, it can:**

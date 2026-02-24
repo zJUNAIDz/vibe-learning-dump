@@ -21,16 +21,19 @@ Understanding networking means you can **actually debug these issues** instead o
 
 Forget memorizing 7 layers. Here's what developers **actually need**:
 
-```
-┌──────────────────────────────────────┐
-│  Application Layer (HTTP, gRPC, DNS) │ ← Your code
-├──────────────────────────────────────┤
-│  Transport Layer (TCP, UDP)          │ ← Reliability, ports
-├──────────────────────────────────────┤
-│  Network Layer (IP)                  │ ← Routing, addresses
-├──────────────────────────────────────┤
-│  Link Layer (Ethernet, WiFi)         │ ← Physical delivery
-└──────────────────────────────────────┘
+```mermaid
+graph TB
+    A["Application Layer<br/>(HTTP, gRPC, DNS)<br/>← Your code"]
+    B["Transport Layer<br/>(TCP, UDP)<br/>← Reliability, ports"]
+    C["Network Layer<br/>(IP)<br/>← Routing, addresses"]
+    D["Link Layer<br/>(Ethernet, WiFi)<br/>← Physical delivery"]
+    
+    A --> B --> C --> D
+    
+    style A fill:#bfb,stroke:#333,stroke-width:2px
+    style B fill:#ffd,stroke:#333,stroke-width:2px
+    style C fill:#bbf,stroke:#333,stroke-width:2px
+    style D fill:#fbb,stroke:#333,stroke-width:2px
 ```
 
 ---
@@ -38,13 +41,18 @@ Forget memorizing 7 layers. Here's what developers **actually need**:
 ## IP Addresses
 
 ### IPv4
-```
-192.168.1.100
-│   │   │  │
-│   │   │  └─ Host (0-255)
-│   │   └──── Subnet
-│   └──────── Subnet
-└──────────── Network
+```mermaid
+graph TD
+    A["192.168.1.100"] --> B["Network<br/>(192)"]
+    A --> C["Subnet<br/>(168)"]
+    A --> D["Subnet<br/>(1)"]
+    A --> E["Host<br/>(100)<br/>Range: 0-255"]
+    
+    style A fill:#ddf,stroke:#333,stroke-width:2px,color:#000
+    style B fill:#bbf,stroke:#333,stroke-width:2px,color:#000
+    style C fill:#bbf,stroke:#333,stroke-width:2px,color:#000
+    style D fill:#bbf,stroke:#333,stroke-width:2px,color:#000
+    style E fill:#bfb,stroke:#333,stroke-width:2px,color:#000
 ```
 
 **Special ranges:**
@@ -75,16 +83,21 @@ Forget memorizing 7 layers. Here's what developers **actually need**:
 
 A **port** is a number (0-65535) that identifies a specific service on a host.
 
-```
-            ┌─────────────────────┐
-            │   192.168.1.100     │
-            │                     │
-Port 22  ←──┤  SSH server         │
-Port 80  ←──┤  HTTP server        │
-Port 443 ←──┤  HTTPS server       │
-Port 5432←──┤  PostgreSQL         │
-Port 8080←──┤  Your TypeScript app│
-            └─────────────────────┘
+```mermaid
+graph LR
+    subgraph "Host: 192.168.1.100"
+        A["Port 22: SSH server"]
+        B["Port 80: HTTP server"]
+        C["Port 443: HTTPS server"]
+        D["Port 5432: PostgreSQL"]
+        E["Port 8080: Your TypeScript app"]
+    end
+    
+    style A fill:#ffd,stroke:#333,stroke-width:2px
+    style B fill:#bfb,stroke:#333,stroke-width:2px
+    style C fill:#bbf,stroke:#333,stroke-width:2px
+    style D fill:#fda,stroke:#333,stroke-width:2px
+    style E fill:#ddf,stroke:#333,stroke-width:2px
 ```
 
 **Port ranges:**
@@ -131,16 +144,15 @@ Example: 192.168.1.100:8080 over TCP
 - Lost packets are retransmitted
 
 ### Three-Way Handshake (Connection Setup)
-```
-Client                    Server
-  │                          │
-  │─────── SYN ─────────────→│  "Can I connect?"
-  │                          │
-  │←────── SYN-ACK ──────────│  "Yes, ready"
-  │                          │
-  │─────── ACK ─────────────→│  "Acknowledged"
-  │                          │
-  │  [Connection established]│
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Server
+    
+    Client->>Server: SYN ("Can I connect?")
+    Server->>Client: SYN-ACK ("Yes, ready")
+    Client->>Server: ACK ("Acknowledged")
+    Note over Client,Server: Connection established
 ```
 
 **Why this matters:**
@@ -151,14 +163,16 @@ Client                    Server
 ---
 
 ### Four-Way Teardown (Connection Close)
-```
-Client                    Server
-  │─────── FIN ─────────────→│  "I'm done sending"
-  │←────── ACK ──────────────│  "Got it"
-  │←────── FIN ──────────────│  "I'm done too"
-  │─────── ACK ─────────────→│  "Got it"
-  │                          │
-  │  [Connection closed]     │
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Server
+    
+    Client->>Server: FIN ("I'm done sending")
+    Server->>Client: ACK ("Got it")
+    Server->>Client: FIN ("I'm done too")
+    Client->>Server: ACK ("Got it")
+    Note over Client,Server: Connection closed
 ```
 
 **Why this matters:**
@@ -190,12 +204,16 @@ Client                    Server
 
 DNS translates names → IP addresses.
 
-```
-You type:   google.com
-            ↓
-DNS says:   142.250.80.46
-            ↓
-Your app connects to 142.250.80.46
+```mermaid
+graph LR
+    A["You type: google.com"] --> B["DNS lookup"]
+    B --> C["DNS says: 142.250.80.46"]
+    C --> D["Your app connects to 142.250.80.46"]
+    
+    style A fill:#ffe,stroke:#333,stroke-width:2px
+    style B fill:#ffd,stroke:#333,stroke-width:2px
+    style C fill:#bbf,stroke:#333,stroke-width:2px
+    style D fill:#bfb,stroke:#333,stroke-width:2px
 ```
 
 ### How DNS Resolution Works
@@ -419,15 +437,24 @@ sudo ip netns del test-ns
 
 ## How Docker Networking Works (Quick Preview)
 
-```
-Host:           eth0 (192.168.1.100)
-                 │
-             [docker0 bridge]
-                 │
-        ┌────────┼────────┐
-        │        │        │
-    Container1  Container2  Container3
-    (172.17.0.2) (172.17.0.3) (172.17.0.4)
+```mermaid
+graph TB
+    Host["Host: eth0 (192.168.1.100)"]
+    Bridge["docker0 bridge"]
+    C1["Container1<br/>(172.17.0.2)"]
+    C2["Container2<br/>(172.17.0.3)"]
+    C3["Container3<br/>(172.17.0.4)"]
+    
+    Host --> Bridge
+    Bridge --> C1
+    Bridge --> C2
+    Bridge --> C3
+    
+    style Host fill:#bfb,stroke:#333,stroke-width:2px
+    style Bridge fill:#ffd,stroke:#333,stroke-width:2px
+    style C1 fill:#bbf,stroke:#333,stroke-width:2px
+    style C2 fill:#bbf,stroke:#333,stroke-width:2px
+    style C3 fill:#bbf,stroke:#333,stroke-width:2px
 ```
 
 **Key points:**

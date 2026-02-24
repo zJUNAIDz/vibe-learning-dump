@@ -64,30 +64,32 @@
 
 ## Example Pipeline (Conceptual)
 
-```
-1. Commit pushed to GitHub
-   ↓
-2. CI server (Jenkins, GitHub Actions) triggered
-   ↓
-3. Checkout code
-   ↓
-4. Install dependencies
-   ↓
-5. Run unit tests (fail fast)
-   ↓
-6. Run integration tests
-   ↓
-7. Build Docker image
-   ↓
-8. Tag image: myapp:v1.2.3
-   ↓
-9. Push to Docker registry
-   ↓
-10. Deploy to staging (automated)
-    ↓
-11. Run smoke tests
-    ↓
-12. Deploy to production (manual approval or automated)
+```mermaid
+graph TD
+    A["1. Commit pushed to GitHub"] --> B["2. CI server triggered<br/>(Jenkins, GitHub Actions)"]
+    B --> C["3. Checkout code"]
+    C --> D["4. Install dependencies"]
+    D --> E["5. Run unit tests<br/>(fail fast)"]
+    E --> F["6. Run integration tests"]
+    F --> G["7. Build Docker image"]
+    G --> H["8. Tag image<br/>myapp:v1.2.3"]
+    H --> I["9. Push to Docker registry"]
+    I --> J["10. Deploy to staging<br/>(automated)"]
+    J --> K["11. Run smoke tests"]
+    K --> L["12. Deploy to production<br/>(manual approval or automated)"]
+    
+    style A fill:#bfb,stroke:#333,stroke-width:2px
+    style B fill:#ffd,stroke:#333,stroke-width:2px
+    style C fill:#ddf,stroke:#333,stroke-width:2px
+    style D fill:#ddf,stroke:#333,stroke-width:2px
+    style E fill:#bbf,stroke:#333,stroke-width:2px
+    style F fill:#bbf,stroke:#333,stroke-width:2px
+    style G fill:#fda,stroke:#333,stroke-width:2px
+    style H fill:#fda,stroke:#333,stroke-width:2px
+    style I fill:#fda,stroke:#333,stroke-width:2px
+    style J fill:#fcf,stroke:#333,stroke-width:2px
+    style K fill:#bbf,stroke:#333,stroke-width:2px
+    style L fill:#f9f,stroke:#333,stroke-width:2px
 ```
 
 ---
@@ -106,12 +108,16 @@
 - Release branches for production
 
 ### Semantic Versioning
-```
-v1.2.3
-│ │ │
-│ │ └─ Patch (bug fixes)
-│ └─── Minor (new features, backward compatible)
-└───── Major (breaking changes)
+```mermaid
+graph TD
+    A["v1.2.3"] --> B["Major (1)<br/>Breaking changes"]
+    A --> C["Minor (2)<br/>New features,<br/>backward compatible"]
+    A --> D["Patch (3)<br/>Bug fixes"]
+    
+    style A fill:#ddf,stroke:#333,stroke-width:2px,color:#000
+    style B fill:#fbb,stroke:#333,stroke-width:2px,color:#000
+    style C fill:#bfb,stroke:#333,stroke-width:2px,color:#000
+    style D fill:#ffd,stroke:#333,stroke-width:2px,color:#000
 ```
 
 ---

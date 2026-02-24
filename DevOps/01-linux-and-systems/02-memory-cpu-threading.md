@@ -8,16 +8,19 @@
 
 When you allocate memory in your program, what's actually happening?
 
-```typescript
-// In your code
-const bigArray = new Array(1000000);  // "I need memory"
-
-// What the OS does
-1. Process asks kernel for memory
-2. Kernel checks if RAM is available
-3. Kernel gives process VIRTUAL memory addresses
-4. Virtual addresses map to PHYSICAL RAM (or swap)
-5. If RAM is full → moves old pages to disk (swap)
+```mermaid
+sequenceDiagram
+    participant Code as Your Code
+    participant Proc as Process
+    participant Kern as Kernel
+    participant RAM as Physical RAM
+    
+    Code->>Proc: const bigArray = new Array(1000000)
+    Proc->>Kern: "I need memory"
+    Kern->>Kern: Check if RAM is available
+    Kern->>Proc: Give process VIRTUAL memory addresses
+    Kern->>RAM: Map virtual → physical addresses (or swap)
+    Note over Kern,RAM: If RAM is full → moves old pages to disk (swap)
 ```
 
 ---
@@ -26,13 +29,26 @@ const bigArray = new Array(1000000);  // "I need memory"
 
 Every process thinks it has its own **giant, continuous memory space**.
 
-```
-Process A sees:          Process B sees:
-0x00000000               0x00000000
-    ↓                        ↓
-0xFFFFFFFF               0xFFFFFFFF
-
-But they're actually mapped to different physical RAM!
+```mermaid
+graph LR
+    subgraph "Process A sees"
+        A1["0x00000000<br/>↓<br/>0xFFFFFFFF"]
+    end
+    
+    subgraph "Process B sees"
+        B1["0x00000000<br/>↓<br/>0xFFFFFFFF"]
+    end
+    
+    subgraph "Actually mapped to"
+        C["Different physical RAM!"]
+    end
+    
+    A1 -.-> C
+    B1 -.-> C
+    
+    style A1 fill:#bbf,stroke:#333,stroke-width:2px
+    style B1 fill:#fbb,stroke:#333,stroke-width:2px
+    style C fill:#bfb,stroke:#333,stroke-width:2px
 ```
 
 **Why virtual memory exists:**
@@ -49,26 +65,32 @@ But they're actually mapped to different physical RAM!
 
 ## Memory Layout of a Process
 
-```
-High addresses (0xFFFF...)
-┌─────────────────────┐
-│  Kernel space       │ ← Not accessible by user process
-├─────────────────────┤
-│  Stack              │ ← Local variables, function calls
-│    ↓ grows down     │
-├─────────────────────┤
-│  (unused)           │
-├─────────────────────┤
-│    ↑ grows up       │
-│  Heap               │ ← Dynamic allocations (malloc, new)
-├─────────────────────┤
-│  BSS (uninitialized)│ ← Global variables (zero-initialized)
-├─────────────────────┤
-│  Data (initialized) │ ← Global variables (explicitly set)
-├─────────────────────┤
-│  Text (code)        │ ← Your compiled program
-└─────────────────────┘
-Low addresses (0x0000...)
+```mermaid
+graph TB
+    subgraph "Memory Layout (High addresses at top)"
+        A["Kernel space<br/>❌ Not accessible by user process"]
+        B["Stack<br/>↓ grows down<br/>Local variables, function calls"]
+        C["(unused)"]
+        D["Heap<br/>↑ grows up<br/>Dynamic allocations (malloc, new)"]
+        E["BSS (uninitialized)<br/>Global variables (zero-initialized)"]
+        F["Data (initialized)<br/>Global variables (explicitly set)"]
+        G["Text (code)<br/>Your compiled program"]
+    end
+    
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    
+    style A fill:#fbb,stroke:#333,stroke-width:2px
+    style B fill:#bbf,stroke:#333,stroke-width:2px
+    style C fill:#eee,stroke:#333,stroke-width:1px,stroke-dasharray: 5 5
+    style D fill:#bfb,stroke:#333,stroke-width:2px
+    style E fill:#ffd,stroke:#333,stroke-width:2px
+    style F fill:#fda,stroke:#333,stroke-width:2px
+    style G fill:#ddf,stroke:#333,stroke-width:2px
 ```
 
 ---

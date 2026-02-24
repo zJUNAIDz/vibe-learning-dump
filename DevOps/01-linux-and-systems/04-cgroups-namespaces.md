@@ -8,12 +8,20 @@
 
 A **container** is not a special kernel feature. It's just:
 
-```
-Container = cgroups + namespaces + layers
-
-cgroups     → Resource limits (CPU, memory)
-namespaces  → Isolation (processes, network, filesystem)
-layers      → Union filesystem (image layering)
+```mermaid
+graph LR
+    A[Container] --> B[cgroups]
+    A --> C[namespaces]
+    A --> D[layers]
+    
+    B -->|"Resource limits"| E["CPU, memory"]
+    C -->|Isolation| F["processes, network, filesystem"]
+    D -->|"Union filesystem"| G["image layering"]
+    
+    style A fill:#bfb,stroke:#333,stroke-width:3px
+    style B fill:#ffd,stroke:#333,stroke-width:2px
+    style C fill:#bbf,stroke:#333,stroke-width:2px
+    style D fill:#fda,stroke:#333,stroke-width:2px
 ```
 
 **That's it.** Docker, Podman, containerd are just **user-friendly wrappers** around these Linux primitives.
@@ -103,10 +111,22 @@ Each container gets:
 - Its own routing table
 - Its own iptables rules
 
-```
-Host:                Container:
-eth0 (192.168.1.100)  eth0 (172.17.0.2)
-lo (127.0.0.1)        lo (127.0.0.1)
+```mermaid
+graph LR
+    subgraph Host
+        A["eth0<br/>(192.168.1.100)"]
+        B["lo<br/>(127.0.0.1)"]
+    end
+    
+    subgraph Container
+        C["eth0<br/>(172.17.0.2)"]
+        D["lo<br/>(127.0.0.1)"]
+    end
+    
+    style A fill:#bbf,stroke:#333,stroke-width:2px
+    style B fill:#ddf,stroke:#333,stroke-width:2px
+    style C fill:#fbb,stroke:#333,stroke-width:2px
+    style D fill:#fdd,stroke:#333,stroke-width:2px
 ```
 
 ---
@@ -140,11 +160,26 @@ sudo ip netns del test-ns
 
 Each container sees its own filesystem tree.
 
-```
-Host:               Container:
-/home/user/         /app/
-/etc/systemd/       /etc/nginx/
-/var/log/           /var/log/app/
+```mermaid
+graph LR
+    subgraph "Host Filesystem"
+        A["/home/user/"]
+        B["/etc/systemd/"]
+        C["/var/log/"]
+    end
+    
+    subgraph "Container Filesystem"
+        D["/app/"]
+        E["/etc/nginx/"]
+        F["/var/log/app/"]
+    end
+    
+    style A fill:#bbf,stroke:#333,stroke-width:2px
+    style B fill:#bbf,stroke:#333,stroke-width:2px
+    style C fill:#bbf,stroke:#333,stroke-width:2px
+    style D fill:#fbb,stroke:#333,stroke-width:2px
+    style E fill:#fbb,stroke:#333,stroke-width:2px
+    style F fill:#fbb,stroke:#333,stroke-width:2px
 ```
 
 **Why this matters:**
@@ -202,16 +237,25 @@ Each symlink points to a namespace ID. Processes sharing the same namespace ID a
 ### Why cgroups Exist
 
 Without cgroups:
-```
-Process A uses 100% CPU
-Process B starves
+```mermaid
+graph LR
+    A["Process A"] -->|"uses 100% CPU"| C[CPU]
+    B["Process B"] -.->|starves| C
+    
+    style A fill:#bfb,stroke:#333,stroke-width:2px
+    style B fill:#fbb,stroke:#333,stroke-width:2px
+    style C fill:#ffd,stroke:#333,stroke-width:2px
 ```
 
 With cgroups:
-```
-Process A gets max 50% CPU
-Process B gets 50%
-Both happy
+```mermaid
+graph LR
+    A["Process A"] -->|"max 50% CPU"| C[CPU]
+    B["Process B"] -->|"50% CPU"| C
+    
+    style A fill:#bfb,stroke:#333,stroke-width:2px
+    style B fill:#bfb,stroke:#333,stroke-width:2px
+    style C fill:#ffd,stroke:#333,stroke-width:2px
 ```
 
 ---
@@ -365,16 +409,33 @@ var cache = make(map[string][]byte)
 People always ask: "What's the difference?"
 
 ### Virtual Machines
-```
-┌────────────────────────────────────┐
-│         Host OS (Linux)            │
-├────────────────────────────────────┤
-│         Hypervisor (KVM, etc.)     │
-├─────────────┬──────────────────────┤
-│  Guest OS   │     Guest OS         │  ← Full OS for each VM
-│  (kernel)   │     (kernel)         │
-│  App A      │     App B            │
-└─────────────┴──────────────────────┘
+```mermaid
+graph TB
+    A["Host OS (Linux)"]
+    B["Hypervisor (KVM, etc.)"]
+    
+    subgraph VM1["Virtual Machine 1"]
+        C1["Guest OS (kernel)"]
+        C2["App A"]
+    end
+    
+    subgraph VM2["Virtual Machine 2"]
+        D1["Guest OS (kernel)"]
+        D2["App B"]
+    end
+    
+    A --> B
+    B --> C1
+    B --> D1
+    C1 --> C2
+    D1 --> D2
+    
+    style A fill:#ddf,stroke:#333,stroke-width:2px
+    style B fill:#ffd,stroke:#333,stroke-width:2px
+    style C1 fill:#fbb,stroke:#333,stroke-width:2px
+    style D1 fill:#fbb,stroke:#333,stroke-width:2px
+    style C2 fill:#bfb,stroke:#333,stroke-width:2px
+    style D2 fill:#bfb,stroke:#333,stroke-width:2px
 ```
 
 **Overhead:**
@@ -385,15 +446,27 @@ People always ask: "What's the difference?"
 ---
 
 ### Containers
-```
-┌────────────────────────────────────┐
-│         Host OS (Linux)            │  ← One kernel shared
-├────────────────────────────────────┤
-│  [Container runtime: Docker, etc.] │
-├─────────────┬──────────────────────┤
-│  App A      │     App B            │  ← Just userspace
-│  (cgroups, namespaces)             │
-└─────────────┴──────────────────────┘
+```mermaid
+graph TB
+    A["Host OS (Linux)<br/>← One kernel shared"]
+    B["Container runtime: Docker, etc."]
+    
+    subgraph Container1
+        C1["App A<br/>(cgroups, namespaces)"]
+    end
+    
+    subgraph Container2
+        D1["App B<br/>(cgroups, namespaces)"]
+    end
+    
+    A --> B
+    B --> C1
+    B --> D1
+    
+    style A fill:#ddf,stroke:#333,stroke-width:2px
+    style B fill:#ffd,stroke:#333,stroke-width:2px
+    style C1 fill:#bfb,stroke:#333,stroke-width:2px
+    style D1 fill:#bfb,stroke:#333,stroke-width:2px
 ```
 
 **Overhead:**

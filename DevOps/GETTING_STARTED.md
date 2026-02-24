@@ -123,42 +123,40 @@ k9s version
 
 ### Learning Path
 
-```
-Start Here ↓
-
-00. DevOps Mindset (1 hour)
-    ↓
-01. Linux & Systems (8-10 hours)
-    ↓
-02. Containers Deep Dive (4-6 hours)
-    ↓
-03. Kubernetes Fundamentals (10-12 hours)
-    ↓
-04. Kubernetes for Developers (6-8 hours)
-    ↓
-05. K9s (2-3 hours)
-    ↓
-06. CI/CD Fundamentals (4-6 hours)
-    ↓
-07. Jenkins (6-8 hours)
-    ↓
-08-09. IaC & Terraform (8-10 hours)
-    ↓
-10. Ansible (4-6 hours)
-    ↓
-11. Makefile (2-3 hours)
-    ↓
-12. Cloud Fundamentals (4-6 hours)
-    ↓
-13. Observability (6-8 hours)
-    ↓
-14. Security (4-6 hours)
-    ↓
-15. Real-World Failures (2-3 hours)
-    ↓
-16. Capstone Project (12-16 hours)
-
-Total: ~80-100 hours
+```mermaid
+graph TD
+    A["Start Here: 00. DevOps Mindset<br/>(1 hour)"] --> B["01. Linux & Systems<br/>(8-10 hours)"]
+    B --> C["02. Containers Deep Dive<br/>(4-6 hours)"]
+    C --> D["03. Kubernetes Fundamentals<br/>(10-12 hours)"]
+    D --> E["04. Kubernetes for Developers<br/>(6-8 hours)"]
+    E --> F["05. K9s<br/>(2-3 hours)"]
+    F --> G["06. CI/CD Fundamentals<br/>(4-6 hours)"]
+    G --> H["07. Jenkins<br/>(6-8 hours)"]
+    H --> I["08-09. IaC & Terraform<br/>(8-10 hours)"]
+    I --> J["10. Ansible<br/>(4-6 hours)"]
+    J --> K["11. Makefile<br/>(2-3 hours)"]
+    K --> L["12. Cloud Fundamentals<br/>(4-6 hours)"]
+    L --> M["13. Observability<br/>(6-8 hours)"]
+    M --> N["14. Security<br/>(4-6 hours)"]
+    N --> O["15. Real-World Failures<br/>(2-3 hours)"]
+    O --> P["16. Capstone Project<br/>(12-16 hours)<br/><br/>Total: ~80-100 hours"]
+    
+    style A fill:#bfb,stroke:#333,stroke-width:2px
+    style B fill:#ffd,stroke:#333,stroke-width:2px
+    style C fill:#ffd,stroke:#333,stroke-width:2px
+    style D fill:#bbf,stroke:#333,stroke-width:2px
+    style E fill:#bbf,stroke:#333,stroke-width:2px
+    style F fill:#ddf,stroke:#333,stroke-width:2px
+    style G fill:#fda,stroke:#333,stroke-width:2px
+    style H fill:#fda,stroke:#333,stroke-width:2px
+    style I fill:#fcf,stroke:#333,stroke-width:2px
+    style J fill:#fcf,stroke:#333,stroke-width:2px
+    style K fill:#dfd,stroke:#333,stroke-width:2px
+    style L fill:#ffd,stroke:#333,stroke-width:2px
+    style M fill:#fda,stroke:#333,stroke-width:2px
+    style N fill:#fbb,stroke:#333,stroke-width:2px
+    style O fill:#f99,stroke:#333,stroke-width:2px
+    style P fill:#9f9,stroke:#333,stroke-width:3px
 ```
 
 ---
