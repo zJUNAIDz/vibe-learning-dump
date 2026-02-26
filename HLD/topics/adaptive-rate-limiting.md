@@ -5,6 +5,7 @@
 Traditional rate limiting uses fixed thresholds (e.g., "100 requests per second") that don't account for system health, varying request costs, or changing traffic patterns. Adaptive rate limiting dynamically adjusts limits based on system capacity and observed behavior.
 
 Real production scenario:
+
 - API gateway with fixed limit: 1000 req/s per user
 - Normal operation: Each request takes 10ms, system handles 1000 req/s easily
 - Attacker exploits expensive endpoint: Search query taking 5 seconds per request
@@ -17,6 +18,7 @@ Real production scenario:
 **The core problem**: Fixed rate limits assume all requests have equal cost. In reality, requests have vastly different resource consumption (10ms database lookup vs 5s complex search query vs 30s report generation).
 
 Traditional fixed rate limiting:
+
 - Same limit regardless of system health
 - Doesn't account for request complexity
 - Can't adapt to traffic patterns
@@ -24,6 +26,7 @@ Traditional fixed rate limiting:
 - Rejects requests even when system healthy
 
 Adaptive rate limiting:
+
 - Adjusts limits based on system load (CPU, latency, error rate)
 - Accounts for request cost (expensive operations get lower limits)
 - Learns from traffic patterns
@@ -50,12 +53,14 @@ app.post('/report', handleReport);        // 30s
 ```
 
 **Why it seems reasonable:**
+
 - Simple to configure
 - Prevents individual users from overwhelming system
 - Standard rate limiting pattern
 - Easy to communicate to users
 
 **How it breaks:**
+
 - Attacker sends 100 expensive search requests (5s each) = 500s CPU time
 - Rate limiter sees 100 req/s and allows it
 - System overloaded from 100 requests
@@ -63,6 +68,7 @@ app.post('/report', handleReport);        // 30s
 - One expensive request = same cost as one cheap request (wrong)
 
 **Production symptoms:**
+
 - System overloaded despite rate limits
 - CPU at 100% from 50 users making expensive queries
 - Quick endpoint users getting rate limited
@@ -79,11 +85,13 @@ app.post('/report', rateLimit({ max: 10 }), handleReport);
 ```
 
 **Why it seems reasonable:**
+
 - Accounts for endpoint cost
 - Expensive endpoints get lower limits
 - Protects from expensive operations
 
 **How it breaks:**
+
 - Limits don't adjust to system health
 - If system has spare capacity, artificially limits throughput
 - If system overloaded, limits may still be too high
@@ -93,6 +101,7 @@ app.post('/report', rateLimit({ max: 10 }), handleReport);
 - Hard to tune (requires manual adjustment)
 
 **Production symptoms:**
+
 - Search endpoint limited to 100 req/s even when system idle
 - System overloaded when many users hit limit simultaneously
 - Wasted capacity during low traffic
@@ -109,14 +118,14 @@ class CPUAdjustedRateLimiter {
 
   async checkLimit(req: Request): Promise<boolean> {
     const cpuUsage = os.loadavg()[0] / os.cpus().length;
-    
+
     // Adjust limit based on CPU
     if (cpuUsage > 0.8) {
       this.currentLimit = 500;
     } else if (cpuUsage < 0.5) {
       this.currentLimit = 2000;
     }
-    
+
     // But no per-user tracking!
     const currentRate = this.getGlobalRate();
     return currentRate < this.currentLimit;
@@ -125,11 +134,13 @@ class CPUAdjustedRateLimiter {
 ```
 
 **Why it seems reasonable:**
+
 - Adapts to system health
 - Increases limit when system idle
 - Decreases limit when system overloaded
 
 **How it breaks:**
+
 - No per-user fairness (single user can consume all quota)
 - Attacker sends 500 req/s, consumes entire adjusted limit
 - Legitimate users get nothing
@@ -137,6 +148,7 @@ class CPUAdjustedRateLimiter {
 - CPU may be high from background jobs, not user traffic
 
 **Production symptoms:**
+
 - One user consuming 80% of traffic
 - Other users getting rate limited
 - System appears "protected" but single user dominating
@@ -149,23 +161,25 @@ class CPUAdjustedRateLimiter {
 class LatencyBasedLimiter {
   async checkRequest(req: Request): Promise<boolean> {
     const currentLatency = await measureLatency();
-    
+
     // Reject if latency high
     if (currentLatency > 1000) {
       return false;  // Rate limited
     }
-    
+
     return true;
   }
 }
 ```
 
 **Why it seems reasonable:**
+
 - Protects system when latency high
 - Direct feedback from system health
 - Prevents overload
 
 **How it breaks:**
+
 - Single slow query causes all requests to be rejected
 - No smoothing (reacts to every spike)
 - Doesn't identify which users causing high latency
@@ -173,6 +187,7 @@ class LatencyBasedLimiter {
 - Oscillates (rejects → latency drops → allows → latency spikes → rejects)
 
 **Production symptoms:**
+
 - 503 errors spike after every slow query
 - System oscillates between accepting and rejecting
 - Legitimate users experience intermittent failures
@@ -218,7 +233,7 @@ Initial limit = baseline (e.g., 100 req/s)
 Every second:
   If system healthy (latency < SLA):
     limit += additive_increase (e.g., +10 req/s)
-  
+
   If system overloaded (latency > SLA):
     limit *= multiplicative_decrease (e.g., × 0.5)
 
@@ -268,7 +283,7 @@ Every second:
     R += additive_increase
   else if system_overloaded():
     R *= multiplicative_decrease
-  
+
   for each user:
     user.tokens = min(C, user.tokens + R)
 ```
@@ -373,7 +388,7 @@ class AdaptiveRateLimiter {
       quota.tokens -= cost;
       quota.requestCount++;
       quota.totalCost += cost;
-      
+
       return {
         allowed: true,
         cost,
@@ -416,7 +431,7 @@ class AdaptiveRateLimiter {
    */
   private getOrCreateQuota(userId: string): UserQuota {
     let quota = this.userQuotas.get(userId);
-    
+
     if (!quota) {
       quota = {
         tokens: this.currentGlobalLimit,
@@ -439,7 +454,7 @@ class AdaptiveRateLimiter {
     const now = Date.now();
     const elapsed = (now - quota.lastRefill) / 1000;  // seconds
     const tokensToAdd = elapsed * quota.refillRate;
-    
+
     quota.tokens = Math.min(quota.maxTokens, quota.tokens + tokensToAdd);
     quota.lastRefill = now;
   }
@@ -496,7 +511,7 @@ class AdaptiveRateLimiter {
    */
   private getP99Latency(): number {
     if (this.latencyHistory.length === 0) return 0;
-    
+
     const sorted = [...this.latencyHistory].sort((a, b) => a - b);
     const index = Math.floor(sorted.length * 0.99);
     return sorted[index];
@@ -524,15 +539,15 @@ class AdaptiveRateLimiter {
       costByComplexity: (req) => {
         // Estimate complexity from query params
         let complexity = 0;
-        
+
         if (req.query.search) {
           complexity += req.query.search.length * 2;
         }
-        
+
         if (req.query.limit) {
           complexity += parseInt(req.query.limit) / 10;
         }
-        
+
         return complexity;
       },
     };
@@ -621,22 +636,22 @@ const rateLimiter = new AdaptiveRateLimiter({
     ]),
     costByComplexity: (req) => {
       let cost = 0;
-      
+
       // Search queries more expensive for longer terms
       if (req.query.q) {
         cost += Math.min(req.query.q.length * 2, 100);
       }
-      
+
       // Pagination: higher offsets = more expensive
       if (req.query.offset) {
         cost += parseInt(req.query.offset) / 100;
       }
-      
+
       // Sorting adds cost
       if (req.query.sort) {
         cost += 10;
       }
-      
+
       return cost;
     },
   },
@@ -733,6 +748,7 @@ const rateLimiter = new AdaptiveRateLimiter({
 ```
 
 **Why this works:**
+
 - User can make 1000 simple lookups OR 20 searches OR 5 ML predictions
 - Fair distribution based on resource consumption
 - Prevents abuse of expensive endpoints
@@ -757,20 +773,21 @@ const rateLimiter = new AdaptiveRateLimiter({
 app.use(async (req, res, next) => {
   const userId = req.user.id;
   const tierLimit = getLimitForTier(req.user.tier);
-  
+
   // Override global limit with tier-specific limit
   const result = await rateLimiter.checkLimit(userId, req);
-  
+
   if (!result.allowed && result.remaining < tierLimit * 0.1) {
     res.setHeader('X-Upgrade-Available', 'true');
     res.setHeader('X-Upgrade-Tier', 'premium');
   }
-  
+
   // ... rest of handling
 });
 ```
 
 **Why this works:**
+
 - Different limits for different customer tiers
 - Encourages upgrades when approaching limit
 - Adaptive behavior within tier constraints
@@ -788,6 +805,7 @@ const rateLimiter = new AdaptiveRateLimiter({
 ```
 
 **Why this works:**
+
 - Handles traffic spikes gracefully
 - Users not penalized for occasional bursts
 - System protected from sustained high traffic
@@ -799,11 +817,13 @@ const rateLimiter = new AdaptiveRateLimiter({
 **Problem:** New users have no history, system doesn't know their behavior.
 
 **Symptoms:**
+
 - Legitimate user makes expensive query as first request
 - System doesn't know if it's abuse or legitimate
 - May be too permissive or too restrictive
 
 **Mitigation:**
+
 - Start with conservative limit
 - Gradually increase limit for good actors
 - Decrease limit for suspicious behavior
@@ -813,11 +833,13 @@ const rateLimiter = new AdaptiveRateLimiter({
 **Problem:** Limits increase and decrease rapidly, causing instability.
 
 **Symptoms:**
+
 - Limit swings between 100 and 10,000 rapidly
 - Users experience inconsistent behavior
 - Hard to predict available capacity
 
 **Mitigation:**
+
 - Smooth latency measurements (moving average)
 - Add dampening to AIMD algorithm
 - Set reasonable min/max bounds
@@ -827,11 +849,13 @@ const rateLimiter = new AdaptiveRateLimiter({
 **Problem:** Estimated cost doesn't match actual cost.
 
 **Symptoms:**
+
 - User charged 50 tokens but request takes 500ms
 - System overloaded despite rate limiting
 - Unfair penalization for cheap requests estimated as expensive
 
 **Mitigation:**
+
 - Measure actual cost and update estimates
 - Refund tokens if actual cost lower than estimated
 - Feedback loop to improve cost model
@@ -841,11 +865,13 @@ const rateLimiter = new AdaptiveRateLimiter({
 **Problem:** User makes burst of requests, exhausts tokens, can't make any requests.
 
 **Symptoms:**
+
 - User hits limit, must wait 10 seconds for refill
 - User experiences complete outage
 - No graceful degradation
 
 **Mitigation:**
+
 - Allow small burst even when tokens low
 - Reserve minimum tokens for critical operations
 - Graceful degradation (serve cached data)
@@ -855,10 +881,12 @@ const rateLimiter = new AdaptiveRateLimiter({
 ### Latency Stability
 
 **Fixed rate limiting:**
+
 - Latency can grow unbounded under load
 - No feedback mechanism
 
 **Adaptive rate limiting:**
+
 - Latency stays near target (100ms)
 - System rejects requests to maintain SLA
 - Served requests have predictable performance
@@ -866,11 +894,13 @@ const rateLimiter = new AdaptiveRateLimiter({
 ### Throughput Optimization
 
 **Fixed limit of 1000 req/s:**
+
 - System capacity 5000 req/s during off-peak
 - Wastes 4000 req/s capacity
 - During peak: 1000 req/s may overload system
 
 **Adaptive limit:**
+
 - Off-peak: Increases to 5000 req/s (uses full capacity)
 - Peak: Decreases to 800 req/s (prevents overload)
 - Optimal throughput at all times
@@ -878,10 +908,12 @@ const rateLimiter = new AdaptiveRateLimiter({
 ### Fairness
 
 **Fixed per-user limit:**
+
 - User making expensive requests same limit as cheap requests
 - Unfair resource allocation
 
 **Cost-based adaptive limit:**
+
 - User charged based on actual resource consumption
 - Fair allocation based on cost
 

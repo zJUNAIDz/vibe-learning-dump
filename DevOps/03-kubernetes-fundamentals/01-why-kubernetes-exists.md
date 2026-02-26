@@ -11,6 +11,7 @@ You've learned containers. Now imagine:
 **Scenario:** You have 100 microservices, each in a container.
 
 **Questions:**
+
 1. Where do these containers run? (Which servers?)
 2. What happens when a container crashes?
 3. How do containers find each other?
@@ -39,6 +40,7 @@ docker run -d --name api-v2 myapi:v1
 ```
 
 **Problems:**
+
 - Manual tracking (which container on which server?)
 - No auto-restart (container crashes → stays down)
 - No load balancing (traffic goes where?)
@@ -78,13 +80,13 @@ sequenceDiagram
     participant Dev as You (Developer)
     participant CP as Kubernetes Control Plane
     participant Cluster as Cluster (Actual State)
-    
+
     Dev->>CP: "I want 3 replicas of my API"
     Note over Dev,CP: Declare desired state
-    
+
     CP->>CP: Current: 2 replicas<br/>Desired: 3 replicas<br/>Action: Start 1 more
     Note over CP: Reconcile
-    
+
     CP->>Cluster: Start 1 more replica
     Cluster->>CP: 3 replicas running ✓
 ```
@@ -101,14 +103,15 @@ Kubernetes constantly runs **control loops**.
 loop forever:
     actual_state = observe()
     desired_state = read_from_api_server()
-    
+
     if actual_state != desired_state:
         take_action_to_reconcile()
-    
+
     sleep(interval)
 ```
 
 **Example:**
+
 ```
 Desired: 3 pods
 Actual: 2 pods (one crashed)
@@ -122,13 +125,13 @@ New actual: 3 pods ✓
 
 ## Kubernetes vs Docker
 
-| Docker | Kubernetes |
-|--------|------------|
-| Runs containers on ONE machine | Runs containers across MANY machines |
-| Manual restart (`--restart=always`) | Automatic restart and rescheduling |
-| No native load balancing | Built-in load balancing |
-| No rolling updates | Rolling updates, rollbacks |
-| No health checks (basic) | Liveness, readiness, startup probes |
+| Docker                              | Kubernetes                           |
+| ----------------------------------- | ------------------------------------ |
+| Runs containers on ONE machine      | Runs containers across MANY machines |
+| Manual restart (`--restart=always`) | Automatic restart and rescheduling   |
+| No native load balancing            | Built-in load balancing              |
+| No rolling updates                  | Rolling updates, rollbacks           |
+| No health checks (basic)            | Liveness, readiness, startup probes  |
 
 **Kubernetes uses Docker (or containerd) to actually run containers.**
 
@@ -139,16 +142,19 @@ New actual: 3 pods ✓
 You might have used `docker-compose.yml` for multi-container apps.
 
 **Docker Compose:**
+
 - Single machine
 - Dev environments
 - Simple deployments
 
 **Kubernetes:**
+
 - Multi-machine cluster
 - Production environments
 - Complex deployments (scaling, updates, failover)
 
 **Analogy:**
+
 ```
 Docker Compose = SQLite
 Kubernetes = PostgreSQL cluster
@@ -167,18 +173,18 @@ graph TB
             CM["Controller Manager"]
             ETCD["etcd (database)"]
         end
-        
+
         subgraph "Data Plane / Worker Nodes"
             N1["Node 1<br/>[Pod] [Pod]"]
             N2["Node 2<br/>[Pod] [Pod]"]
             N3["Node 3<br/>[Pod]"]
         end
-        
+
         API --> N1
         API --> N2
         API --> N3
     end
-    
+
     style API fill:#bfb,stroke:#333,stroke-width:2px
     style SCHED fill:#ffd,stroke:#333,stroke-width:2px
     style CM fill:#bbf,stroke:#333,stroke-width:2px
@@ -189,6 +195,7 @@ graph TB
 ```
 
 **Two parts:**
+
 1. **Control Plane** — Brains (decides what to do)
 2. **Data Plane (Nodes)** — Muscle (runs your containers)
 
@@ -197,6 +204,7 @@ graph TB
 ## Control Plane Components
 
 ### 1. **API Server** (kube-apiserver)
+
 - **Front door** to Kubernetes
 - All communication goes through it
 - RESTful API
@@ -204,6 +212,7 @@ graph TB
 - Stores state in etcd
 
 **You interact with it via `kubectl`:**
+
 ```bash
 kubectl get pods
 # → Sends GET /api/v1/namespaces/default/pods to API server
@@ -212,6 +221,7 @@ kubectl get pods
 ---
 
 ### 2. **etcd**
+
 - **Distributed key-value store** (like a database)
 - Stores ALL cluster state
   - What pods exist?
@@ -225,6 +235,7 @@ kubectl get pods
 ---
 
 ### 3. **Scheduler** (kube-scheduler)
+
 - **Decides which node a pod runs on**
 - Watches for new pods (with no node assigned)
 - Considers:
@@ -239,6 +250,7 @@ kubectl get pods
 ---
 
 ### 4. **Controller Manager** (kube-controller-manager)
+
 - **Runs control loops** (reconciliation)
 - Multiple controllers:
   - **Deployment Controller** → Ensures desired replicas exist
@@ -255,6 +267,7 @@ kubectl get pods
 Each **node** (worker machine) runs:
 
 ### 1. **kubelet**
+
 - **Agent that runs on every node**
 - Talks to API server: "What pods should I run?"
 - Starts/stops containers (via containerd)
@@ -264,6 +277,7 @@ Each **node** (worker machine) runs:
 ---
 
 ### 2. **Container Runtime** (containerd, CRI-O, Docker)
+
 - **Actually runs the containers**
 - kubelet tells it: "Start this container with these settings"
 - Container runtime does the cgroups, namespaces, etc.
@@ -271,6 +285,7 @@ Each **node** (worker machine) runs:
 ---
 
 ### 3. **kube-proxy**
+
 - **Handles networking**
 - Implements Kubernetes Services (load balancing)
 - Updates iptables/IPVS rules
@@ -284,35 +299,32 @@ Let's trace what happens when you run `kubectl apply -f pod.yaml`.
 
 ```mermaid
 sequenceDiagram
-    participant kubectl
+    participant U as User (kubectl)
     participant API as API Server
-    participant etcd
-    participant Scheduler
-    participant kubelet as kubelet on node2
-    
-    kubectl->>API: 1. POST pod.yaml
-    Note over API: 2. Validates YAML<br/>Authenticates<br/>Authorizes (RBAC)
-    API->>etcd: 3. Write pod object
-    
-    Scheduler->>API: 4. Watching for new pods<br/>Sees: status=Pending, no node assigned
-    Note over Scheduler: 5. Evaluates all nodes<br/>Picks best node
-    Scheduler->>API: 6. Update pod: node=node2
-    API->>etcd: Write update
-    
-    kubelet->>API: 7. Watching for pods assigned to node2
-    Note over kubelet: 8. Sees new pod<br/>assigned to me
-   - Sees pod assigned to node2
-   - Tells containerd: "Start these containers"
-   - containerd pulls image, starts containers
+    participant ETCD as etcd
+    participant SCHED as Scheduler
+    participant KLET as Kubelet (Node 2)
+    participant CR as Container Runtime
 
-5. kubelet reports back
-   - "Pod is Running"
-   - API server updates etcd
+    U->>API: 1. POST pod.yaml
+    Note over API: 2. Validate, Auth, & RBAC
+    API->>ETCD: 3. Persist Pod (status=Pending)
+    
+    SCHED->>API: 4. Watch: New Pod (no node)
+    Note over SCHED: 5. Filter & Score Nodes
+    SCHED->>API: 6. Bind Pod to Node 2
+    API->>ETCD: Update Pod Metadata
 
-6. You check
-   - kubectl get pods
-   - API server reads from etcd
-   - Shows: Running ✓
+    KLET->>API: 7. Watch: Pods on Node 2
+    Note over KLET: 8. Detect assignment
+    KLET->>CR: 9. Create Containers
+    CR-->>KLET: Containers Running
+    
+    KLET->>API: 10. Update Status: Running
+    API->>ETCD: Persist Status
+    
+    U->>API: 11. kubectl get pods
+    API->>U: Pod Status: Running ✓
 ```
 
 **Every step is asynchronous.** No direct RPC between components (except API server ↔ etcd).
@@ -322,6 +334,7 @@ sequenceDiagram
 ## Declarative vs Imperative
 
 ### Imperative (Tell Me HOW)
+
 ```bash
 kubectl run nginx --image=nginx
 kubectl scale deployment nginx --replicas=3
@@ -333,6 +346,7 @@ kubectl expose deployment nginx --port=80
 ---
 
 ### Declarative (Tell Me WHAT)
+
 ```yaml
 # deployment.yaml
 apiVersion: apps/v1
@@ -366,15 +380,18 @@ kubectl apply -f deployment.yaml
 ## Why This Design?
 
 ### Self-Healing
+
 - Pod crashes → Controller respawns it
 - Node dies → Scheduler moves pods to healthy nodes
 - No manual intervention
 
 ### Scalability
+
 - Want more replicas? Change one number
 - Kubernetes figures out the rest
 
 ### Extensibility
+
 - Custom Resource Definitions (CRDs)
 - Operators (custom controllers)
 - Plugins for networking, storage, etc.
@@ -395,11 +412,13 @@ kubectl apply -f deployment.yaml
 ## War Story: The Cascading Delete
 
 A developer ran:
+
 ```bash
 kubectl delete namespace production
 ```
 
 **What happened:**
+
 - Deleted ALL resources in `production` namespace
 - 50+ services down
 - API server overwhelmed with deletion events
@@ -407,6 +426,7 @@ kubectl delete namespace production
 - Took 30 minutes to recover from backups
 
 **Lesson:** 
+
 - Kubernetes does EXACTLY what you tell it
 - No confirmation prompts (unless you add `--dry-run`)
 - Always test destructive commands with `--dry-run=client` first
@@ -430,14 +450,17 @@ kubectl delete namespace production
 ## Exercises
 
 1. **Read the architecture:**
+   
    - Draw the control plane components on paper
    - Trace the flow of `kubectl apply -f pod.yaml`
 
 2. **Understand control loops:**
+   
    - Think of 3 scenarios where K8s auto-heals
    - What's the desired vs actual state in each?
 
 3. **Imperative vs declarative:**
+   
    - Write the imperative commands to create a deployment
    - Write the declarative YAML for the same
    - Which is easier to version control?

@@ -23,23 +23,23 @@
 
 ## Topics Covered
 
-### 📝 01. Why CI/CD Exists
+### ✅ [01. Why CI/CD Exists](./01-why-cicd-exists.md)
 - The problem: Manual, error-prone releases
 - The solution: Automation and fast feedback
 - Mental model: Pipeline as assembly line
 
-### 📝 02. Build vs Test vs Deploy
+### ✅ [02. Build vs Test vs Deploy](./02-build-test-deploy.md)
 - Build: Compile, bundle, containerize
 - Test: Unit, integration, end-to-end
 - Deploy: Push to staging, production
 
-### 📝 03. Immutable Artifacts
+### ✅ [03. Immutable Artifacts](./03-immutable-artifacts.md)
 - Why you build once, deploy many times
 - Docker images as artifacts
 - Semantic versioning
 - Git tags and releases
 
-### 📝 04. Pipeline Stages
+### ✅ [04. Pipeline Stages](./04-pipeline-stages.md)
 - Checkout code
 - Install dependencies
 - Run tests
@@ -47,13 +47,13 @@
 - Push to registry
 - Deploy to Kubernetes
 
-### 📝 05. Deployment Strategies
+### ✅ [05. Deployment Strategies](./05-deployment-strategies.md)
 - Blue/green deployments
 - Canary deployments
 - Rolling updates (Kubernetes default)
 - Rollbacks vs roll-forwards
 
-### 📝 06. CI/CD Best Practices
+### ✅ [06. CI/CD Best Practices](./06-cicd-best-practices.md)
 - Keep builds fast (<10 minutes)
 - Fail fast (run fast tests first)
 - Idempotent pipelines

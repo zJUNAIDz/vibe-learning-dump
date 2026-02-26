@@ -28,26 +28,26 @@ k9s
 
 ## Topics Covered
 
-### 📝 01. K9s Basics
+### ✅ [01. K9s Basics](./01-k9s-basics.md)
 - Installation (Fedora: `sudo dnf install k9s`)
 - Navigation keys
 - Filtering and searching
 - Context switching
 
-### 📝 02. Resource Management
+### ✅ [02. Resource Management](./02-resource-management.md)
 - Viewing pods, deployments, services
 - Editing resources live
 - Deleting resources safely
 - Scaling deployments
 
-### 📝 03. Debugging Workflows
+### ✅ [03. Debugging Workflows](./03-debugging-workflows.md)
 - Viewing logs (live tail)
 - Describing resources
 - Executing into pods
 - Port forwarding
 - Viewing events
 
-### 📝 04. Advanced Features
+### ✅ [04. Advanced Features](./04-advanced-features.md)
 - Custom views (skins)
 - Aliases
 - Benchmarking
