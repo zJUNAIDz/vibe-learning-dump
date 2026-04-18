@@ -67,7 +67,7 @@ graph TD
 
     C -- CP Systems <br> (e.g., SQL) --> P
     A -- AP Systems <br> (e.g., Cassandra) --> P
-    C -. In a perfect network... .-> A
+    C -. In a perfect network .-> A
 
     style P fill:#ffcccc
 ```
