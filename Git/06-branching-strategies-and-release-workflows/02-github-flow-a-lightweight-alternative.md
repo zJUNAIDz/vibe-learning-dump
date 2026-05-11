@@ -39,28 +39,34 @@ The entire model is based on a few simple rules and one primary, long-lived bran
 
 ```mermaid
 graph TD
-    subgraph main
-        M1 --> M2["Merge PR #1"] --> M3["Merge PR #2"]
-    end
-
-    subgraph "Feature A"
-        F_A
-    end
-
-    subgraph "Feature B"
-        F_B
-    end
-
-    M1 -- branch --> F_A
-    F_A -- work --> F_A
-    F_A -- "Open PR #1" --> M2
-
-    M2 -- branch --> F_B
-    F_B -- work --> F_B
-    F_B -- "Open PR #2" --> M3
-
-    M2 -- "Deploy!"
-    M3 -- "Deploy!"
+    M1["main: Initial commit"]
+    M2["main: Merge PR #1"]
+    M3["main: Merge PR #2"]
+    D1["Deploy!"]
+    D2["Deploy!"]
+    
+    FA1["Feature A: Create branch"]
+    FA2["Feature A: Work & commit"]
+    FA3["Feature A: Open PR #1"]
+    
+    FB1["Feature B: Create branch"]
+    FB2["Feature B: Work & commit"]
+    FB3["Feature B: Open PR #2"]
+    
+    M1 --> M2
+    M2 --> M3
+    
+    M1 --> FA1
+    FA1 --> FA2
+    FA2 --> FA3
+    FA3 --> M2
+    M2 --> D1
+    
+    M2 --> FB1
+    FB1 --> FB2
+    FB2 --> FB3
+    FB3 --> M3
+    M3 --> D2
 ```
 
 ### How are Hotfixes Handled?

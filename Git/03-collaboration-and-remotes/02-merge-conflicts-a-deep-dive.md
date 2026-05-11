@@ -25,27 +25,18 @@ Git then compares the changes.
 **Diagram: The Three-Way Merge**
 ```mermaid
 graph TD
-    subgraph "Commit Graph"
-        A["Merge Base"] --> B["main"]
-        A --> C["feature"]
-    end
-
-    subgraph "File States"
-        F_A["File at A"]
-        F_B["File at B"]
-        F_C["File at C"]
-    end
-
-    GitCompares["Git Compares"]
-    GitCompares -- "diff A B" --> ChangesInMain
-    GitCompares -- "diff A C" --> ChangesInFeature
-
-    subgraph "Conflict"
-        Conflict["Conflict if changes overlap"]
-    end
-
-    ChangesInMain --> Conflict
-    ChangesInFeature --> Conflict
+    A["Merge Base"]
+    B["main"]
+    C["feature"]
+    
+    A -->|changes| B
+    A -->|changes| C
+    
+    B -->|diff A→B| D["Changes in Main"]
+    C -->|diff A→C| E["Changes in Feature"]
+    
+    D --> F["Conflict if changes overlap"]
+    E --> F
 ```
 
 ### Anatomy of a Conflict Marker

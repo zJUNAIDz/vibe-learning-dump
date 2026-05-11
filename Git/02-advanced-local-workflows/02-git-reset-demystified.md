@@ -18,7 +18,8 @@ Let's assume `HEAD` is currently at commit `C`. We run `git reset B`.
 
 ```mermaid
 graph LR
-    A --> B --> C -- "HEAD, master"
+    A --> B --> C
+    C -- "HEAD, master" --> C
 ```
 
 ### `git reset --soft <commit>`

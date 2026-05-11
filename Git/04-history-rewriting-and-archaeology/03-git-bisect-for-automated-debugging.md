@@ -23,27 +23,12 @@ Based on your answer, it halves the search space and repeats the process. For 50
 **Diagram: The Bisect Process**
 ```mermaid
 graph TD
-    subgraph "Commit History"
-        A["Good"] --> B --> C --> D --> E["Bad"]
-    end
-
-    subgraph "Step 1"
-        Git["Git checks out C (midpoint)"]
-        You["You test and say 'git bisect good'"]
-    end
-
-    subgraph "Step 2"
-        Git2["Search space is now D, E. Git checks out D."]
-        You2["You test and say 'git bisect bad'"]
-    end
-
-    subgraph "Result"
-        Result["Git reports D is the first bad commit"]
-    end
-
-    A & E -- "start" --> Git
-    Git -- "answer" --> Git2
-    Git2 -- "answer" --> Result
+    A["Good"] --> B --> C --> D --> E["Bad"]
+    
+    C -->|"Git checks out C (midpoint)"| Git["You test"]
+    Git -->|"git bisect good"| D2["Search space: D, E"]
+    D2 -->|"Git checks out D"| Test["You test"]
+    Test -->|"git bisect bad"| Result["D is the first bad commit"]
 ```
 
 ### The Manual `bisect` Workflow

@@ -24,19 +24,14 @@ When you run `git stash`, Git does the following:
 **Diagram: The Stash Commit Structure**
 ```mermaid
 graph TD
-    subgraph "Commit Graph"
-        HEAD -- "Current Commit"
-    end
+    HEAD["Current Commit"]
+    S["Stash Commit"]
+    W["Working Dir Commit"]
+    I["Index Commit"]
 
-    subgraph "Stash Object (a special commit)"
-        S["Stash Commit"]
-        W["Working Dir Commit"]
-        I["Index Commit"]
-
-        S -- "parent 1" --> HEAD
-        S -- "parent 2" --> W
-        S -- "parent 3 (optional)" --> I
-    end
+    S -->|parent 1| HEAD
+    S -->|parent 2| W
+    S -->|parent 3 optional| I
 ```
 This is why stashing is so robust. It's not some temporary patch file; it's using Git's own powerful commit and object model.
 
